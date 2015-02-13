@@ -1,0 +1,54 @@
+# nodi casuali:
+3: 1 secondo 
+4: 1 secondo 
+10: 1 secondo
+20: 1 secondo
+30: 1 secondo
+40: 1 secondo
+50: 15 secondi
+60: 25 secondi
+70: 45 secondi
+80: 55 secondi
+90: 8 minuti
+100: >8 minuti
+
+
+# nodi su circonferenza:
+3: 1 secondo 
+4: 1 secondo 
+10: 1 secondo
+20: 1 secondo
+30: 1 secondo
+40: 2 secondi
+50: 2 secondi
+60: 2 secondi
+70: 2 secondi
+80: 3 secondi
+90: 5 secondi
+100: 20 secondi
+110: 40 secondi
+120: 55 secondi
+
+
+# nodi su cluster:
+3: 1 secondo (1,2,5)
+4: 1 secondo (1,2,5)
+10: 1 secondo (1,2,5)
+20: 1 secondo (1,2,5)
+30: 2 secondo (1,2,5)
+40: 2 secondi (1), 5 secondi (2), 10 secondi (5)
+50: 2 secondi (1), 35 secondi (2), 55 secondi (5)
+60: 7 secondi (1), 100 secondi (2), 350 secondi (5)
+70: 30 secondi (1), 200 secondi, 750 secondi (5)
+80: 65 secondi (1), 80?
+90: 136 secondi (1), 
+100: 250 secondi (1),
+
+
+
+Spiegazione probabile: 	Su circonferenza le distanze minime sono quelle con i due vicini, quindi in qualche modo salta tanti controlli. 
+		       	Su random, le distanze sono piu' bilanciate e riesce a evitare meno controlli
+			Su cluster, devo fare n calcoli per ogni gruppo, poi i collegamenti sono meno controlli rispetto ai random
+
+SPiego nella relazione che la funzione riceve questo parametro (0, 1, 2 e 3 per le varie funzioni)
+Ci caccio un grafico con i tempi
