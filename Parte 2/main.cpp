@@ -19,7 +19,7 @@ int main (int argc, char const *argv[])
 {
 	try
 	{
-		if (argc < 3) throw std::runtime_error("usage: ./main #nodi disposizione euristica [tabuLength] [maxIter] [# clusters] solIniziale");
+		if (argc < 7) throw std::runtime_error("usage: ./main #nodi disposizione euristica [tabuLength] [maxIter] [# clusters] solIniziale");
 		TSP tspInstance;
 		int cluster=1;
 		int num=atoi(argv[1]);
@@ -27,16 +27,10 @@ int main (int argc, char const *argv[])
 		int fun=atoi(argv[2]); 
 		//0=LS, 1=TS, 2=ATS
 		int met=atoi(argv[3]);
-		int tabuLength = 8;                                                           
-		int maxIter    = 110;
-		if (met==1 || met==2)
-		{
-			tabuLength = atoi(argv[4]);                                                           
-			maxIter    = atoi(argv[5]);
-		}
-		//Secondo argomento è il numero di cluster
-		if (fun==3)
-			cluster=atoi(argv[6]);
+		int tabuLength = atoi(argv[4]);                                                     
+		int maxIter    = atoi(argv[5]); 
+		//Numero di cluster
+		cluster=atoi(argv[6]);
 		tspInstance.read(num, fun, cluster);
 		TSPSolution aSolution(tspInstance);
 		//Tempo di inizio
