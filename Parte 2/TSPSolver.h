@@ -19,6 +19,9 @@ typedef struct move
 {
   int			from;
   int			to;
+  int			c;
+  int			d;
+  int			comb;
 } TSPMove;
 
 /**
@@ -106,15 +109,25 @@ public:
 	* @param bestSol best found solution (output)
 	* @return true id everything OK, false otherwise
 	*/
-	bool solve ( const TSP& tsp , const TSPSolution& initSol , TSPSolution& bestSol );
-	bool solveTL ( const TSP& tsp , const TSPSolution& initSol , int tabulength , int maxIter , TSPSolution& bestSol );
-	bool solveAS ( const TSP& tsp , const TSPSolution& initSol , int tabulength , int maxIter , TSPSolution& bestSol );
+	//Ricerca Locale
+	bool solve ( const TSP& tsp , const TSPSolution& initSol , TSPSolution& bestSol , int opt);
+	//Tabu Search
+	bool solveTL ( const TSP& tsp , const TSPSolution& initSol , int tabulength , int maxIter , TSPSolution& bestSol , int opt);
+	//Aspirazione
+	bool solveAS ( const TSP& tsp , const TSPSolution& initSol , int tabulength , int maxIter , TSPSolution& bestSol , int opt);
 protected:
+	//2-opt senza tabu list
 	double		findBestNeighbor ( const TSP& tsp , const TSPSolution& currSol , TSPMove& move );
+	//2-opt con tabu list
 	double		findBestNeighbor2 ( const TSP& tsp , const TSPSolution& currSol , int currIter , TSPMove& move );
 	double		findBestNeighbor3 ( const TSP& tsp , const TSPSolution& currSol , int currIter , double aspiration , TSPMove& move );
 	TSPSolution&  swap 			 ( TSPSolution& tspSol , const TSPMove& move );
-	bool again(TSPMove& move, std::vector<TSPMove>& moves);
+	//3-opt senza tabu list
+	double		findBestNeighbor3opt ( const TSP& tsp , const TSPSolution& currSol , TSPMove& move );
+	//3-opt con tabu list
+	double		findBestNeighbor3opt2 ( const TSP& tsp , const TSPSolution& currSol , int currIter , TSPMove& move );
+	double 		findBestNeighbor3opt3 ( const TSP& tsp , const TSPSolution& currSol ,int currIter, double aspiration, TSPMove& move );
+	TSPSolution&  swap3opt 			 ( TSPSolution& tspSol , const TSPMove& move );
 	
 	///Tabu search (tabu list stores when a node is involved)
 	int               tabuLength;
