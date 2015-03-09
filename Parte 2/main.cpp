@@ -19,7 +19,7 @@ int main (int argc, char const *argv[])
 {
 	try
 	{
-		if (argc < 7) throw std::runtime_error("usage: ./main #nodi disposizione euristica [tabuLength] [maxIter] [# clusters] solIniziale k-opt");
+		if (argc < 9) throw std::runtime_error("usage: ./main #nodi disposizione euristica [tabuLength] [maxIter] [# clusters] solIniziale k-opt diversificazione");
 		TSP tspInstance;
 		int cluster=1;
 		int num=atoi(argv[1]);
@@ -38,11 +38,13 @@ int main (int argc, char const *argv[])
 		t1 = clock();
 		struct timeval  tv1, tv2;
 		gettimeofday(&tv1, NULL);
-		//0=random, 1=best choice
 		TSPSolver tspSolver;
 		int iniz=atoi(argv[7]);
-		int opt=atoi(argv[8]);
 		//0=2-opt, 1=3-opt
+		int opt=atoi(argv[8]);
+		//0=diversificazione, 1=senza diversificazione
+		int div = atoi(argv[9]);
+		//0=random, 1=best choice
 		if (iniz==0)
 			tspSolver.initRnd(aSolution);
 		else if (iniz==1)
@@ -50,11 +52,11 @@ int main (int argc, char const *argv[])
 		//Ricerca dei vicinati
 		TSPSolution bestSolution(tspInstance);
 		if (met==0)
-			tspSolver.solve(tspInstance,aSolution,bestSolution, opt);
+			tspSolver.solve(tspInstance,aSolution,bestSolution, opt, div);
 		else if (met==1)
-			tspSolver.solveTL(tspInstance,aSolution,tabuLength,maxIter,bestSolution, opt);
+			tspSolver.solveTL(tspInstance,aSolution,tabuLength,maxIter,bestSolution, opt, div);
 		else if (met==2)
-			tspSolver.solveAS(tspInstance,aSolution,tabuLength,maxIter,bestSolution, opt);
+			tspSolver.solveAS(tspInstance,aSolution,tabuLength,maxIter,bestSolution, opt, div);
 		//Tempo di fine
 		t2 = clock();
 		gettimeofday(&tv2, NULL);

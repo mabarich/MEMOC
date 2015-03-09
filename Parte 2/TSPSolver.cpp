@@ -8,7 +8,7 @@
 #include <iostream>
 
 
-bool TSPSolver::solve ( const TSP& tsp , const TSPSolution& initSol , TSPSolution& bestSol, int opt )
+bool TSPSolver::solve ( const TSP& tsp , const TSPSolution& initSol , TSPSolution& bestSol, int opt , int div)
 {
 	try
 	{
@@ -48,8 +48,22 @@ bool TSPSolver::solve ( const TSP& tsp , const TSPSolution& initSol , TSPSolutio
 			} 
 			else 
 			{
-				cout<<"Non trovo di meglio";
-				stop = true;
+				//Se non trovo un risultato migliore con 2-opt, provo ad usare il 3opt per avere un vicinato piu' ampio
+				if(opt==0)
+				{
+					if(div==1)
+					{
+						opt=1;
+						stop = false;
+					}
+					else
+						stop = true;
+				}
+				else if (opt==1)
+				{
+					cout<<"Non trovo di meglio";
+					stop = true;
+				}
 			}
 		}
 		bestSol = currSol; 
@@ -62,7 +76,7 @@ bool TSPSolver::solve ( const TSP& tsp , const TSPSolution& initSol , TSPSolutio
 	return true;
 }
 
-bool TSPSolver::solveTL ( const TSP& tsp , const TSPSolution& initSol , int tabulength , int maxIter , TSPSolution& bestSol, int opt )
+bool TSPSolver::solveTL ( const TSP& tsp , const TSPSolution& initSol , int tabulength , int maxIter , TSPSolution& bestSol, int opt , int div)
 {
 	try
 	{
@@ -85,20 +99,34 @@ bool TSPSolver::solveTL ( const TSP& tsp , const TSPSolution& initSol , int tabu
 			//Passa ogni vicino e trova il miglior risultato
 			if (opt==0)
 			{	
-				bestNeighValue= currValue + findBestNeighbor2(tsp,currSol,iter,move);
+				bestNeighValue= currValue + findBestNeighbor(tsp,currSol,iter,move);
 				std::cout << " move: " << move.from << " , " << move.to << std::endl;
 			}
 			else if (opt==1)
 			{
-				bestNeighValue= currValue+ findBestNeighbor3opt2(tsp,currSol,iter,move);
+				bestNeighValue= currValue+ findBestNeighbor3opt(tsp,currSol,iter,move);
 				std::cout << " move: " << move.from << " , " << move.to <<  " , " << move.d << std::endl;
 			}
 			//Criterio di stop: se non ho più vicini legali mi fermo
 			if ( bestNeighValue >= tsp.infinite ) 
 			{                                                             
-				std::cout << "\tmove: NO legal neighbour" << std::endl;                                           
-				stop = true;                                                                                      
-				continue;                                                                                         
+				std::cout << "\tmove: NO legal neighbour" << std::endl;    
+				if(opt==0)
+				{
+					if(div==1)
+					{
+						opt=1;
+						stop = false;
+					}
+					else
+						stop = true;
+				}
+				else if (opt==1)
+				{
+					stop = true;
+					continue;
+				}	
+				                                                                                      
 			}
 			
 			std::cout << "\tmove: " << move.from << " , " << move.to;
@@ -118,8 +146,23 @@ bool TSPSolver::solveTL ( const TSP& tsp , const TSPSolution& initSol , int tabu
 			}                                                                                                   
 			//Criterio di stop: se ho superato il massimo numero di iterazioni consentite mi fermo
 			if ( iter > maxIter ) 
-			{                                                                            
-				stop = true;                                                                                      
+			{   
+				if(opt==0)
+				{
+					if(div==1)
+					{
+						opt=1;
+						iter=0;
+						stop = false;
+					}
+					else
+						stop = true;
+				}
+				else if (opt==1)
+				{
+					stop = true;
+					continue;
+				}                                                                                      
 			}                                                                                                   
 			std::cout << std::endl;
 			
@@ -133,126 +176,7 @@ bool TSPSolver::solveTL ( const TSP& tsp , const TSPSolution& initSol , int tabu
 	return true;
 }
 
-/*bool TSPSolver::solveTL ( const TSP& tsp , const TSPSolution& initSol , int tabulength , int maxIter , TSPSolution& bestSol, int opt )
-{
-	try
-	{
-		bool stop = false;
-		int  iter = 0;
-		//Tabu List
-		tabuLength = tabulength;
-		tabuList.reserve(tsp.n);
-		initTabuList(tsp.n);
-		//Valuto la soluzione corrente
-		TSPSolution currSol(initSol);
-		double bestValue, currValue;
-		bestValue = currValue = evaluate(currSol,tsp);
-		TSPMove move;
-		while ( ! stop ) 
-		{
-			if ( tsp.n < 20 ) currSol.print();
-			std::cout << " (" << ++iter << ") value " << currValue << " (" << evaluate(currSol,tsp) << ")";
-			//Passa ogni vicino e trova il miglior risultato
-			double bestNeighValue = currValue + findBestNeighbor2(tsp,currSol,iter,move);
-			std::cout << " move: " << move.from << " , " << move.to << std::endl;
-			//Criterio di stop: se non ho più vicini legali mi fermo
-			if ( bestNeighValue >= tsp.infinite ) 
-			{                                                             
-				std::cout << "\tmove: NO legal neighbour" << std::endl;                                           
-				stop = true;                                                                                      
-				continue;                                                                                         
-			}
-			
-			std::cout << "\tmove: " << move.from << " , " << move.to;
-			//Nella tabu list metto il numero dell'iterazione in cui è stata eseguita una mossa. Se la differenza tra l'iterazione corrente e quella salvata è maggiore della lunghezza della lista allora posso rifarla.
-			tabuList[currSol.sequence[move.from]] = iter;                                                       
-			tabuList[currSol.sequence[move.to]]   = iter;                                                       
-			currSol = swap(currSol,move);                                                                       
-			currValue = bestNeighValue;                                                                          
-			if ( currValue < bestValue - 0.01 ) 
-			{                                                               
-				bestValue = currValue;                                                                            
-				bestSol = currSol;                                                                                
-				std::cout << "\t***";                                                                             
-			}                                                                                                   
-			//Criterio di stop: se ho superato il massimo numero di iterazioni consentite mi fermo
-			if ( iter > maxIter ) 
-			{                                                                            
-				stop = true;                                                                                      
-			}                                                                                                   
-			std::cout << std::endl;
-			
-		}
-	}
-	catch(std::exception& e)
-	{
-		std::cout << ">>>EXCEPTION: " << e.what() << std::endl;
-		return false;
-	}
-	return true;
-}*/
-
-/*bool TSPSolver::solveAS ( const TSP& tsp , const TSPSolution& initSol , int tabulength , int maxIter , TSPSolution& bestSol, int opt )   
-{
-	try
-	{
-		bool stop = false;
-		int  iter = 0;
-
-		///Tabu Search
-		tabuLength = tabulength;
-		tabuList.reserve(tsp.n);
-		initTabuList(tsp.n);
-		///
-
-		TSPSolution currSol(initSol);
-		double bestValue, currValue;
-		bestValue = currValue = evaluate(currSol,tsp);
-		TSPMove move;
-		while ( ! stop ) 
-		{
-			++iter;                                                                                             
-			if ( tsp.n < 20 ) currSol.print();
-			std::cout << " (" << iter << ") value " << currValue << "\t(" << evaluate(currSol,tsp) << ")";      
-			double aspiration = bestValue-currValue;                                                            
-			double bestNeighValue = currValue + findBestNeighbor3(tsp,currSol,iter,aspiration,move);             
-
-			if ( bestNeighValue >= tsp.infinite ) 
-			{                                                             
-				std::cout << "\tmove: NO legal neighbour" << std::endl;                                           
-				stop = true;                                                                                      
-				continue;                                                                                         
-			}                                                                                                   
-
-			std::cout << "\tmove: " << move.from << " , " << move.to;
-
-			tabuList[currSol.sequence[move.from]] = iter;                                                       
-			tabuList[currSol.sequence[move.to]]   = iter;                                                       
-			currSol = swap(currSol,move);                                                                       
-			currValue = bestNeighValue;                                                                          
-			if ( currValue < bestValue -0.01 ) 
-			{                                                                
-				bestValue = currValue;                                                                            
-				bestSol = currSol;                                                                                
-				std::cout << "\t***";                                                                             
-			}                                                                                                   
-
-			if ( iter > maxIter ) 
-			{                                                                             
-				stop = true;                                                                                      
-			}                                                                                                  
-			std::cout << std::endl;  
-		}                                                                                 
-	}
-	catch(std::exception& e)
-	{
-		std::cout << ">>>EXCEPTION: " << e.what() << std::endl;
-		return false;
-	}
-	return true;
-}*/
-
-bool TSPSolver::solveAS ( const TSP& tsp , const TSPSolution& initSol , int tabulength , int maxIter , TSPSolution& bestSol, int opt )   
+bool TSPSolver::solveAS ( const TSP& tsp , const TSPSolution& initSol , int tabulength , int maxIter , TSPSolution& bestSol, int opt , int div)   
 {
 	try
 	{
@@ -279,21 +203,34 @@ bool TSPSolver::solveAS ( const TSP& tsp , const TSPSolution& initSol , int tabu
 			//Passa ogni vicino e trova il miglior risultato
 			if (opt==0)
 			{	
-				bestNeighValue= currValue + findBestNeighbor2(tsp,currSol,iter,move);
+				bestNeighValue= currValue + findBestNeighbor(tsp,currSol,iter,aspiration,move);
 				std::cout << " move: " << move.from << " , " << move.to << std::endl;
 			}
 			else if (opt==1)
 			{
-				bestNeighValue= currValue+ findBestNeighbor3opt3(tsp,currSol,iter,aspiration,move);
+				bestNeighValue= currValue+ findBestNeighbor3opt(tsp,currSol,iter,aspiration,move);
 				std::cout << " move: " << move.from << " , " << move.to <<  " , " << move.d << std::endl;
 			}
 			         
 
 			if ( bestNeighValue >= tsp.infinite ) 
 			{                                                             
-				std::cout << "\tmove: NO legal neighbour" << std::endl;                                           
-				stop = true;                                                                                      
-				continue;                                                                                         
+				std::cout << "\tmove: NO legal neighbour" << std::endl;     
+				if(opt==0)
+				{
+					if(div==1)
+					{
+						opt=1;
+						stop = false;
+					}
+					else
+						stop = true;
+				}
+				else if (opt==1)
+				{
+					stop = true;
+					continue;
+				}                                                                                        
 			}                                                                                                   
 
 			std::cout << "\tmove: " << move.from << " , " << move.to;
@@ -313,8 +250,23 @@ bool TSPSolver::solveAS ( const TSP& tsp , const TSPSolution& initSol , int tabu
 			}                                                                                                   
 
 			if ( iter > maxIter ) 
-			{                                                                             
-				stop = true;                                                                                      
+			{        
+				if(opt==0)
+				{
+					if(div==1)
+					{
+						opt=1;
+						iter=0;
+						stop = false;
+					}
+					else
+						stop = true;
+				}
+				else if (opt==1)
+				{
+					stop = true;
+					continue;
+				}                                                                                     
 			}                                                                                                  
 			std::cout << std::endl;  
 		}                                                                                 
@@ -367,7 +319,7 @@ double TSPSolver::findBestNeighbor ( const TSP& tsp , const TSPSolution& currSol
 }
 
 //Trova la minor differenza, non il vicino con la tabu list
-double TSPSolver::findBestNeighbor2 ( const TSP& tsp , const TSPSolution& currSol , int currIter , TSPMove& move )
+double TSPSolver::findBestNeighbor ( const TSP& tsp , const TSPSolution& currSol , int currIter , TSPMove& move )
 /* Determine the *move* yielding the best 2-opt neigbor solution
  */
 {
@@ -396,7 +348,7 @@ double TSPSolver::findBestNeighbor2 ( const TSP& tsp , const TSPSolution& currSo
 }
 
 
-double TSPSolver::findBestNeighbor3 ( const TSP& tsp , const TSPSolution& currSol , int currIter , double aspiration , TSPMove& move )     //**// TSAC: use aspiration
+double TSPSolver::findBestNeighbor ( const TSP& tsp , const TSPSolution& currSol , int currIter , double aspiration , TSPMove& move )     //**// TSAC: use aspiration
 /* Determine the NON-TABU (or satisfying aspiration) *move* yielding the best 2-opt neigbor solution
  * Aspiration criteria: 'neighDecrement' better than 'aspiration' (notice that 'aspiration'
  * has been set such that if 'neighDecrement' is better than 'aspiration' than we have a
@@ -455,41 +407,25 @@ double TSPSolver::findBestNeighbor3opt ( const TSP& tsp , const TSPSolution& cur
 				if ( neighDecrement < bestDecrement ) 
 				{
 					bestDecrement = neighDecrement;
-					move.from = a;
-					move.to = b;
-					move.c = b+1;
-					move.d=c;
-					move.comb= 1;
+					save(move, 1, a, b, c);
 				}
 				neighDecrement = - tsp.cost[h][i] - tsp.cost[j][k] - tsp.cost[l][m] + tsp.cost[i][m] + tsp.cost[l][j] + tsp.cost[h][k];
 				if ( neighDecrement < bestDecrement ) 
 				{
 					bestDecrement = neighDecrement;
-					move.from = a;
-					move.to = b;
-					move.c = b+1;
-					move.d=c;
-					move.comb= 2;
+					save(move, 2, a, b, c);
 				}
 				neighDecrement = - tsp.cost[h][i] - tsp.cost[j][k] - tsp.cost[l][m] + tsp.cost[i][k] + tsp.cost[h][l] + tsp.cost[m][j];
 				if ( neighDecrement < bestDecrement ) 
 				{
 					bestDecrement = neighDecrement;
-					move.from = a;
-					move.to = b;
-					move.c = b+1;
-					move.d=c;
-					move.comb= 3;
+					save(move, 3, a, b, c);
 				}
 				neighDecrement = - tsp.cost[h][i] - tsp.cost[j][k] - tsp.cost[l][m] + tsp.cost[i][l] + tsp.cost[h][k] + tsp.cost[m][j];
 				if ( neighDecrement < bestDecrement ) 
 				{
 					bestDecrement = neighDecrement;
-					move.from = a;
-					move.to = b;
-					move.c = b+1;
-					move.d=c;
-					move.comb= 4;
+					save(move, 4, a, b, c);
 				}
 			}
 		}
@@ -498,7 +434,7 @@ double TSPSolver::findBestNeighbor3opt ( const TSP& tsp , const TSPSolution& cur
 }
 
 //Trova la minor differenza, non il vicino
-double TSPSolver::findBestNeighbor3opt2 ( const TSP& tsp , const TSPSolution& currSol ,int currIter, TSPMove& move )
+double TSPSolver::findBestNeighbor3opt ( const TSP& tsp , const TSPSolution& currSol ,int currIter, TSPMove& move )
 /* Determine the *move* yielding the best 3-opt neigbor solution
  */
 {
@@ -523,41 +459,25 @@ double TSPSolver::findBestNeighbor3opt2 ( const TSP& tsp , const TSPSolution& cu
 				if ( neighDecrement < bestDecrement ) 
 				{
 					bestDecrement = neighDecrement;
-					move.from = a;
-					move.to = b;
-					move.c = b+1;
-					move.d=c;
-					move.comb= 1;
+					save(move, 1, a, b, c);
 				}
 				neighDecrement = - tsp.cost[h][i] - tsp.cost[j][k] - tsp.cost[l][m] + tsp.cost[i][m] + tsp.cost[l][j] + tsp.cost[h][k];
 				if ( neighDecrement < bestDecrement ) 
 				{
 					bestDecrement = neighDecrement;
-					move.from = a;
-					move.to = b;
-					move.c = b+1;
-					move.d=c;
-					move.comb= 2;
+					save(move, 2, a, b, c);
 				}
 				neighDecrement = - tsp.cost[h][i] - tsp.cost[j][k] - tsp.cost[l][m] + tsp.cost[i][k] + tsp.cost[h][l] + tsp.cost[m][j];
 				if ( neighDecrement < bestDecrement ) 
 				{
 					bestDecrement = neighDecrement;
-					move.from = a;
-					move.to = b;
-					move.c = b+1;
-					move.d=c;
-					move.comb= 3;
+					save(move, 3, a, b, c);
 				}
 				neighDecrement = - tsp.cost[h][i] - tsp.cost[j][k] - tsp.cost[l][m] + tsp.cost[i][l] + tsp.cost[h][k] + tsp.cost[m][j];
 				if ( neighDecrement < bestDecrement ) 
 				{
 					bestDecrement = neighDecrement;
-					move.from = a;
-					move.to = b;
-					move.c = b+1;
-					move.d=c;
-					move.comb= 4;
+					save(move, 4, a, b, c);
 				}
 			}
 		}
@@ -567,7 +487,7 @@ double TSPSolver::findBestNeighbor3opt2 ( const TSP& tsp , const TSPSolution& cu
 }
 
 //Trova la minor differenza, non il vicino
-double TSPSolver::findBestNeighbor3opt3 ( const TSP& tsp , const TSPSolution& currSol ,int currIter, double aspiration, TSPMove& move )
+double TSPSolver::findBestNeighbor3opt ( const TSP& tsp , const TSPSolution& currSol ,int currIter, double aspiration, TSPMove& move )
 /* Determine the *move* yielding the best 3-opt neigbor solution
  */
 {
@@ -595,11 +515,7 @@ double TSPSolver::findBestNeighbor3opt3 ( const TSP& tsp , const TSPSolution& cu
 				if ( neighDecrement < bestDecrement ) 
 				{
 					bestDecrement = neighDecrement;
-					move.from = a;
-					move.to = b;
-					move.c = b+1;
-					move.d=c;
-					move.comb= 1;
+					save(move, 1, a, b, c);
 				}
 				neighDecrement = - tsp.cost[h][i] - tsp.cost[j][k] - tsp.cost[l][m] + tsp.cost[i][m] + tsp.cost[l][j] + tsp.cost[h][k];
 				if ( (currIter - tabuList[i] <= tabuLength) && (currIter - tabuList[j] <= tabuLength) && !(neighDecrement < aspiration-0.01) ) 
@@ -609,11 +525,7 @@ double TSPSolver::findBestNeighbor3opt3 ( const TSP& tsp , const TSPSolution& cu
 				if ( neighDecrement < bestDecrement ) 
 				{
 					bestDecrement = neighDecrement;
-					move.from = a;
-					move.to = b;
-					move.c = b+1;
-					move.d=c;
-					move.comb= 2;
+					save(move, 2, a, b, c);
 				}
 				neighDecrement = - tsp.cost[h][i] - tsp.cost[j][k] - tsp.cost[l][m] + tsp.cost[i][k] + tsp.cost[h][l] + tsp.cost[m][j];
 				if ( (currIter - tabuList[i] <= tabuLength) && (currIter - tabuList[j] <= tabuLength) && !(neighDecrement < aspiration-0.01) ) 
@@ -623,11 +535,7 @@ double TSPSolver::findBestNeighbor3opt3 ( const TSP& tsp , const TSPSolution& cu
 				if ( neighDecrement < bestDecrement ) 
 				{
 					bestDecrement = neighDecrement;
-					move.from = a;
-					move.to = b;
-					move.c = b+1;
-					move.d=c;
-					move.comb= 3;
+					save(move, 3, a, b, c);
 				}
 				neighDecrement = - tsp.cost[h][i] - tsp.cost[j][k] - tsp.cost[l][m] + tsp.cost[i][l] + tsp.cost[h][k] + tsp.cost[m][j];
 				if ( (currIter - tabuList[i] <= tabuLength) && (currIter - tabuList[j] <= tabuLength) && !(neighDecrement < aspiration-0.01) ) 
@@ -637,17 +545,22 @@ double TSPSolver::findBestNeighbor3opt3 ( const TSP& tsp , const TSPSolution& cu
 				if ( neighDecrement < bestDecrement ) 
 				{
 					bestDecrement = neighDecrement;
-					move.from = a;
-					move.to = b;
-					move.c = b+1;
-					move.d=c;
-					move.comb= 4;
+					save(move, 4, a, b, c);
 				}
 			}
 		}
 	}
 	if ( bestDecrement >= tsp.infinite ) std::cout << "\n AARRGH!!! " << std::endl;
 	return bestDecrement;
+}
+
+void TSPSolver::save(TSPMove& move, int comb, int a, int b, int c)
+{
+	move.from = a;
+	move.to = b;
+	move.c = b+1;
+	move.d=c;
+	move.comb= comb;
 }
 
 //3-opt. Scambia tre elementi non consecutivi della sequenza

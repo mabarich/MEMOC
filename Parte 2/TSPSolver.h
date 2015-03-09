@@ -110,25 +110,28 @@ public:
 	* @return true id everything OK, false otherwise
 	*/
 	//Ricerca Locale
-	bool solve ( const TSP& tsp , const TSPSolution& initSol , TSPSolution& bestSol , int opt);
+	bool solve ( const TSP& tsp , const TSPSolution& initSol , TSPSolution& bestSol , int opt, int div);
 	//Tabu Search
-	bool solveTL ( const TSP& tsp , const TSPSolution& initSol , int tabulength , int maxIter , TSPSolution& bestSol , int opt);
+	bool solveTL ( const TSP& tsp , const TSPSolution& initSol , int tabulength , int maxIter , TSPSolution& bestSol , int opt , int div);
 	//Aspirazione
-	bool solveAS ( const TSP& tsp , const TSPSolution& initSol , int tabulength , int maxIter , TSPSolution& bestSol , int opt);
+	bool solveAS ( const TSP& tsp , const TSPSolution& initSol , int tabulength , int maxIter , TSPSolution& bestSol , int opt , int div);
 protected:
 	//2-opt senza tabu list
 	double		findBestNeighbor ( const TSP& tsp , const TSPSolution& currSol , TSPMove& move );
 	//2-opt con tabu list
-	double		findBestNeighbor2 ( const TSP& tsp , const TSPSolution& currSol , int currIter , TSPMove& move );
-	double		findBestNeighbor3 ( const TSP& tsp , const TSPSolution& currSol , int currIter , double aspiration , TSPMove& move );
+	double		findBestNeighbor ( const TSP& tsp , const TSPSolution& currSol , int currIter , TSPMove& move );
+	double		findBestNeighbor ( const TSP& tsp , const TSPSolution& currSol , int currIter , double aspiration , TSPMove& move );
 	TSPSolution&  swap 			 ( TSPSolution& tspSol , const TSPMove& move );
 	//3-opt senza tabu list
 	double		findBestNeighbor3opt ( const TSP& tsp , const TSPSolution& currSol , TSPMove& move );
 	//3-opt con tabu list
-	double		findBestNeighbor3opt2 ( const TSP& tsp , const TSPSolution& currSol , int currIter , TSPMove& move );
-	double 		findBestNeighbor3opt3 ( const TSP& tsp , const TSPSolution& currSol ,int currIter, double aspiration, TSPMove& move );
+	double		findBestNeighbor3opt ( const TSP& tsp , const TSPSolution& currSol , int currIter , TSPMove& move );
+	double 		findBestNeighbor3opt ( const TSP& tsp , const TSPSolution& currSol ,int currIter, double aspiration, TSPMove& move );
 	TSPSolution&  swap3opt 			 ( TSPSolution& tspSol , const TSPMove& move );
-	
+	//Metodo per rimuovere tutti i copia-incolla
+	void 		save(TSPMove& move, int comb, int a, int b, int c);	
+
+
 	///Tabu search (tabu list stores when a node is involved)
 	int               tabuLength;
 	std::vector<int>  tabuList;
